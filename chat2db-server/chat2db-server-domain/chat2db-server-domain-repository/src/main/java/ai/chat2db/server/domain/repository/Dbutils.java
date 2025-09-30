@@ -140,14 +140,22 @@ public class Dbutils {
     private static DataSource initDataSource() {
         HikariDataSource dataSource = new HikariDataSource();
         String environment = StringUtils.defaultString(System.getProperty("spring.profiles.active"), "dev");
+
         if ("dev".equalsIgnoreCase(environment)) {
-            dataSource.setJdbcUrl("jdbc:h2:file:~/.chat2db/db/chat2db_dev;MODE=MYSQL");
-        }else if ("test".equalsIgnoreCase(environment)) {
-            dataSource.setJdbcUrl("jdbc:h2:file:~/.chat2db/db/chat2db_test;MODE=MYSQL");
-        }else {
-            dataSource.setJdbcUrl("jdbc:h2:~/.chat2db/db/chat2db;MODE=MYSQL;FILE_LOCK=NO");
+            dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/chat2db_dev?useSSL=false&serverTimezone=UTC");
+            dataSource.setUsername("root");
+            dataSource.setPassword("200066");
+        } else if ("test".equalsIgnoreCase(environment)) {
+            dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/chat2db_test?useSSL=false&serverTimezone=UTC");
+            dataSource.setUsername("root");
+            dataSource.setPassword("200066");
+        } else {
+            dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/chat2db?useSSL=false&serverTimezone=UTC");
+            dataSource.setUsername("root");
+            dataSource.setPassword("200066");
         }
-        dataSource.setDriverClassName("org.h2.Driver");
+
+        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
         dataSource.setIdleTimeout(60000);
         dataSource.setAutoCommit(true);
         dataSource.setMaximumPoolSize(500);
@@ -155,8 +163,8 @@ public class Dbutils {
         dataSource.setMaxLifetime(60000 * 10);
         dataSource.setConnectionTestQuery("SELECT 1");
         return dataSource;
-
     }
+
 
     /**
      * Initialize interceptor

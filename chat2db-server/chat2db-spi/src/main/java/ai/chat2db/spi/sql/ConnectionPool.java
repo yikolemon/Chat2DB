@@ -1,12 +1,10 @@
 package ai.chat2db.spi.sql;
 
 import lombok.extern.slf4j.Slf4j;
-import org.h2.engine.ConnectionInfo;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
