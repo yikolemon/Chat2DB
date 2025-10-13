@@ -73,6 +73,9 @@ public class JdbcDriverServiceImpl implements JdbcDriverService {
 
 
     private boolean driverExists(DriverConfig driverConfig) {
+        if (Boolean.TRUE.equals(driverConfig.isInnerDriver())) {
+            return true;
+        }
         boolean flag = true;
         String[] jarPaths = driverConfig.getJdbcDriver().split(",");
         for (String jarPath : jarPaths) {

@@ -52,6 +52,8 @@ public class DriverConfig  implements Serializable {
 
 
     private boolean defaultDriver;
+    
+    private boolean innerDriver;
 
     public boolean notEmpty() {
        return StringUtils.isNotBlank(getJdbcDriver()) && StringUtils.isNotBlank(

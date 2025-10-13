@@ -141,8 +141,15 @@ public class IDriverManager {
                 if (DRIVER_ENTRY_MAP.containsKey(driver.getJdbcDriver())) {
                     return DRIVER_ENTRY_MAP.get(driver.getJdbcDriver());
                 }
-                ClassLoader cl = getClassLoader(driver);
-                Driver d = (Driver) cl.loadClass(driver.getJdbcDriverClass()).newInstance();
+                ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
+                Class<?> driverClass = threadClassLoader.loadClass(driver.getJdbcDriverClass());
+                Driver d;
+                if (driverClass != null) {
+                    d = (Driver)driverClass.getDeclaredConstructor().newInstance();
+                } else {
+                    ClassLoader cl = getClassLoader(driver);
+                    d = (Driver) cl.loadClass(driver.getJdbcDriverClass()).newInstance();
+                }
                 DriverEntry driverEntry = DriverEntry.builder().driverConfig(driver).driver(d).build();
                 DRIVER_ENTRY_MAP.put(driver.getJdbcDriver(), driverEntry);
                 return driverEntry;
