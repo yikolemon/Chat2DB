@@ -142,7 +142,7 @@ public class Dbutils {
         String environment = StringUtils.defaultString(System.getProperty("spring.profiles.active"), "dev");
 
         if ("dev".equalsIgnoreCase(environment)) {
-            dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/chat2db_dev?useSSL=false&serverTimezone=UTC");
+            dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/chat2db_dev?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true");
             dataSource.setUsername("root");
             dataSource.setPassword("200066");
         } else if ("test".equalsIgnoreCase(environment)) {

@@ -16,6 +16,7 @@ export enum DatabaseTypeCode {
   HIVE = 'HIVE',
   KINGBASE = 'KINGBASE',
   TIMEPLUS = 'TIMEPLUS',
+  JINGWEI = 'JINGWEI',
 }
 
 export enum ConsoleStatus {

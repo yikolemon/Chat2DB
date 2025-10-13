@@ -34,6 +34,7 @@ public class Chat2DBContext {
         Iterator<Plugin> iterator = s.iterator();
         while (iterator.hasNext()) {
             Plugin plugin = iterator.next();
+            log.info("加载plugin：{}", plugin.toString());
             PLUGIN_MAP.put(plugin.getDBConfig().getDbType(), plugin);
         }
     }

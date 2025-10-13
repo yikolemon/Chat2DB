@@ -339,20 +339,19 @@
 
     <build>
         <plugins>
-            <!-- compile -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <!-- Configure mapstruct to disable builder -->
+                    <source>17</source> <!-- 或你的 JDK 版本 -->
+                    <target>17</target>
                     <compilerArgs>
-                        <arg>
-                            -Amapstruct.disableBuilders=true
-                        </arg>
+                        <arg>-Amapstruct.disableBuilders=true</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
+
 
             <!-- Support maven revision to configure the system version -->
             <plugin>

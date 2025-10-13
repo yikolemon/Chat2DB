@@ -27,6 +27,13 @@ export const databaseMap: {
     // port: 9092,
     icon: '\ue61c',
   },
+  [DatabaseTypeCode.JINGWEI]: {
+    name: '精卫',
+    img: moreDBLogo,
+    code: DatabaseTypeCode.JINGWEI,
+    // port: 3306,
+    icon: '\ue603',
+  },
   [DatabaseTypeCode.ORACLE]: {
     name: 'Oracle',
     img: moreDBLogo,

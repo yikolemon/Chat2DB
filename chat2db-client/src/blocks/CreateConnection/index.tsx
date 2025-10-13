@@ -3,7 +3,7 @@ import styles from './index.less';
 import classnames from 'classnames';
 import { IConnectionDetails, IDatabase } from '@/typings';
 import ConnectionEdit from '@/components/ConnectionEdit';
-import { databaseTypeList } from '@/constants';
+import { databaseTypeList, DatabaseTypeCode } from '@/constants';
 import Iconfont from '@/components/Iconfont';
 import i18n from '@/i18n';
 import FileUploadModal from '@/components/ImportConnection';
@@ -64,23 +64,25 @@ export default memo<IProps>((props) => {
         {connectionDetail === null && (
           <div className={styles.dataBaseListBox}>
             <div className={styles.dataBaseList}>
-              {databaseTypeList.map((t) => {
-                return (
-                  <div key={t.code} className={styles.databaseItem} onClick={handleCreateConnections.bind(null, t)}>
-                    <div className={styles.databaseItemMain}>
-                      <div className={styles.databaseItemLeft}>
-                        <div className={styles.logoBox}>
-                          <Iconfont code={t.icon} />
+              {databaseTypeList
+                .filter(t => t.code === DatabaseTypeCode.H2 || t.code === DatabaseTypeCode.MYSQL || t.code === DatabaseTypeCode.JINGWEI)
+                .map((t) => {
+                  return (
+                    <div key={t.code} className={styles.databaseItem} onClick={handleCreateConnections.bind(null, t)}>
+                      <div className={styles.databaseItemMain}>
+                        <div className={styles.databaseItemLeft}>
+                          <div className={styles.logoBox}>
+                            <Iconfont code={t.icon} />
+                          </div>
+                          {t.name}
                         </div>
-                        {t.name}
-                      </div>
-                      <div className={styles.databaseItemRight}>
-                        <Iconfont code="&#xe631;" />
+                        <div className={styles.databaseItemRight}>
+                          <Iconfont code="&#xe631;" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
               <div className={styles.databaseItem} onClick={() => {setIsFileUploadModalOpen(true)}}>
                 <div className={styles.databaseItemMain}>
                   <div className={styles.databaseItemLeft}>

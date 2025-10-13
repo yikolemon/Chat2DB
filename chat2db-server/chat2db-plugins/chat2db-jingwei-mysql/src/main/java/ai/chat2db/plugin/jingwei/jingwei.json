@@ -1,0 +1,26 @@
+{
+  "dbType": "JINGWEI",
+  "name": "Jingwei",
+  "driverConfigList": [
+    {
+      "jdbcDriver": "ai.chat2db.plugin.jingwei.JingweiMySQLDriver",
+      "jdbcDriverClass": "ai.chat2db.plugin.jingwei.JingweiMySQLDriver",
+      "downloadJdbcDriverUrls": []
+    }
+  ],
+  "defaultPort": 80,
+  "connectInfo": {
+    "connectKeyList": [
+      "host",
+      "port",
+      "apiKey",
+      "username",
+      "password"
+    ],
+    "driverClassList": [
+      "ai.chat2db.plugin.jingwei.JingweiMySQLDriver"
+    ],
+    "jdbcTemplateUrl": "http://{host}:{port}/api",
+    "jdbcDriverClass": "ai.chat2db.plugin.jingwei.JingweiMySQLDriver"
+  }
+}
