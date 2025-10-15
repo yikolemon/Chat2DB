@@ -106,5 +106,7 @@ public class Table implements Serializable {
     private String createTime;
 
     private String updateTime;
+    
+    private Boolean detailInfo;
 }
 

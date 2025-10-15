@@ -4,6 +4,7 @@ import ai.chat2db.plugin.jingwei.client.req.JingWeiTokenReq;
 import ai.chat2db.plugin.jingwei.client.req.SqlExecuteRequest;
 import ai.chat2db.plugin.jingwei.client.resp.*;
 import com.dtflys.forest.annotation.*;
+import com.dtflys.forest.callback.OnLoadCookie;
 import com.dtflys.forest.http.ForestResponse;
 
 import java.util.List;
@@ -17,10 +18,12 @@ public interface JingWeiClient {
 
     @Post("/api/user/login")
     @LogEnabled(value = true)
+    @Redirection(value = false)
     ForestResponse<String> getToken(@JSONBody JingWeiTokenReq req);
 
     @Get("/api/audit/ddl/rds/datasource")
     @LogEnabled(value = true)
+    @Redirection(value = false)
     ForestResponse<BaseResp<List<Cluster>>> getCataLogs(@Query("query_type") String queryType, @Query("env") String env, @Header("Cookie") String tokenCookie);
 
     /**
@@ -31,6 +34,7 @@ public interface JingWeiClient {
      * @return 表名列表响应
      */
     @Get("/api/audit/ddl/rds/table_name_list")
+    @Redirection(value = false)
     ForestResponse<TableListResponse> getTableList(@Query("cluster_id") String clusterId, @Query("database_name") String databaseName, @Header("Cookie") String tokenCookie);
 
     /**
@@ -42,6 +46,7 @@ public interface JingWeiClient {
      * @return 表字段和索引信息响应
      */
     @Get("/api/audit/ddl/rds/table/_columns_and_index")
+    @Redirection(value = false)
     ForestResponse<TableInfoResponse> getTableColumnsAndIndex(
             @Query("cluster_id") String clusterId,
             @Query("rds_db") String databaseName,
@@ -54,8 +59,9 @@ public interface JingWeiClient {
      * @param tokenCookie 认证Cookie
      * @return SQL执行响应
      */
-    @Post("/api/rds/rds-core-pro-user/mex_loan_biz/async/_exe")
-    ForestResponse<SqlExecuteResponse> executeSql(@JSONBody SqlExecuteRequest request, @Header("Cookie") String tokenCookie);
+    @Post("/api/rds/rds-core-pro-user/${databaseName}/async/_exe")
+    @Redirection(value = false)
+    ForestResponse<SqlExecuteResponse> executeSql(@Var("databaseName") String databaseName, @JSONBody SqlExecuteRequest request, @Header("Cookie") String tokenCookie);
     
     /**
      * 获取SQL查询结果
@@ -64,5 +70,6 @@ public interface JingWeiClient {
      * @return SQL查询结果响应
      */
     @Get("/api/rds/sql/exe/record/${sqlExeRecordId}/_result")
+    @Redirection(value = false)
     ForestResponse<SqlQueryResultResponse> getSqlQueryResult(@Var("sqlExeRecordId") Long sqlExeRecordId, @Header("Cookie") String tokenCookie);
 }

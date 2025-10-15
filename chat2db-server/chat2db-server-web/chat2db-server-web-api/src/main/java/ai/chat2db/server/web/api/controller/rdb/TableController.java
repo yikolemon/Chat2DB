@@ -91,7 +91,6 @@ public class TableController extends EmbeddingController {
     public ListResult<SimpleTable> tableList(@Valid TableBriefQueryRequest request) {
         TablePageQueryParam queryParam = rdbWebConverter.tablePageRequest2param(request);
         return tableService.queryTables(queryParam);
-
     }
 
 

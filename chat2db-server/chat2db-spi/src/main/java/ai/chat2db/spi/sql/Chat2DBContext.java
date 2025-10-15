@@ -111,26 +111,6 @@ public class Chat2DBContext {
     }
 
 
-    public static String getDbVersion() {
-        ConnectInfo connectInfo = getConnectInfo();
-        String dbVersion = connectInfo.getDbVersion();
-        if (dbVersion == null) {
-            synchronized (connectInfo) {
-                if (connectInfo.getDbVersion() != null) {
-                    return connectInfo.getDbVersion();
-                } else {
-                    dbVersion = SQLExecutor.getInstance().getDbVersion(getConnection());
-                    connectInfo.setDbVersion(dbVersion);
-                    return connectInfo.getDbVersion();
-                }
-            }
-        } else {
-            return dbVersion;
-        }
-
-    }
-
-
     /**
      * Set context
      *

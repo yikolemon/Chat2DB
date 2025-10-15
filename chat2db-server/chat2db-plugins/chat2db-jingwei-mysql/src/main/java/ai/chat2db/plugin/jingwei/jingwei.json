@@ -1,6 +1,8 @@
 {
   "dbType": "JINGWEI",
   "name": "Jingwei",
+  "supportDatabase": false,
+  "supportSchema": true,
   "driverConfigList": [
     {
       "dbType": "JINGWEI",

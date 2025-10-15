@@ -7,9 +7,13 @@ import ai.chat2db.plugin.jingwei.client.resp.Database;
 import ai.chat2db.plugin.jingwei.driver.Constants;
 import ai.chat2db.plugin.jingwei.driver.TokenManager;
 import com.dtflys.forest.Forest;
+import com.dtflys.forest.http.ForestCookie;
 import com.dtflys.forest.http.ForestResponse;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -32,17 +36,23 @@ public class CatalogsManager {
     // 按 idc 分组的 catalogMap（key = idc/environment, value = Map<databaseName, CatalogInfo>）
     private static final Map<String, Map<String, CatalogInfo>> idcCatalogMap = new ConcurrentHashMap<>();
 
+    // 新增：按 clusterId 划分 catalog
+    // key = clusterId, value = Map<databaseName, CatalogInfo>
+    private static final Map<String, Map<String, CatalogInfo>> clusterCatalogMap = new ConcurrentHashMap<>();
+
+    private static final Map<String, ClusterInfo> clusterMap = new ConcurrentHashMap<>();
+    
     // 控制初始化只执行一次
     private static volatile boolean initialized = false;
 
     private CatalogsManager() {
-        // 私有化构造函数，防止实例化
+        // 私有化构造函数，防止实例化tr
     }
 
     /**
      * 初始化 catalog 信息（线程安全，避免重复 init）
      */
-    public static void initCatalogs() {
+    public static void initCatalogs() throws SQLException {
         if (!initialized) { // 第一重检查
             synchronized (CatalogsManager.class) {
                 if (!initialized) { // 第二重检查
@@ -52,7 +62,7 @@ public class CatalogsManager {
                         String queryType = Constants.JING_WEI_CATA_LOG_QUERY_TYPE;
                         ForestResponse<BaseResp<List<Cluster>>> response = Forest.client(JingWeiClient.class)
                                 .getCataLogs(queryType, env, token);
-                        if (response != null && response.isSuccess()) {
+                        if (response != null && response.isSuccess() && response.status_2xx()) {
                             BaseResp<List<Cluster>> clustersResp = response.getResult();
                             if (!Boolean.TRUE.equals(clustersResp.getSuccess())) {
                                 logger.error("fetch cataLogs error");
@@ -60,13 +70,16 @@ public class CatalogsManager {
                             }
                             List<Cluster> clusterList = clustersResp.getData();
                             processClusters(clusterList);
+                            initialized = true;
+                        } else if (response != null && response.status_3xx()){
+                            TokenManager.clearToken();
+                            throw new RuntimeException("精卫TOKEN过期");                        
                         } else {
-                            logger.error("Failed to get catalog information");
+                            throw new RuntimeException("精卫访问失败");
                         }
                     } catch (Exception e) {
                         logger.error("Error loading catalogs", e);
-                    } finally {
-                        initialized = true; // 保证即使异常也不会重复 init
+
                     }
                 }
             }
@@ -76,7 +89,7 @@ public class CatalogsManager {
     /**
      * 强制刷新 catalog 信息（线程安全）
      */
-    public static void refreshCatalogs() {
+    public static void refreshCatalogs() throws SQLException {
         synchronized (CatalogsManager.class) {
             catalogMap.clear();
             idcCatalogMap.clear();
@@ -100,6 +113,7 @@ public class CatalogsManager {
             Integer port = cluster.getPort();
 
             List<Database> databases = cluster.getDatabases();
+            
             if (databases != null) {
                 for (Database db : databases) {
                     String databaseName = db.getDatabaseName();
@@ -115,14 +129,22 @@ public class CatalogsManager {
 
                     // 全局存一份
                     catalogMap.put(databaseName, catalogInfo);
-
+                    ClusterInfo clusterInfo = trans2ClusterInfo(cluster);
                     // idc 分组存一份
-                    idcCatalogMap
-                            .computeIfAbsent(idc, k -> new ConcurrentHashMap<>())
-                            .put(databaseName, catalogInfo);
+                    idcCatalogMap.computeIfAbsent(idc, k -> new ConcurrentHashMap<>()).put(databaseName, catalogInfo);
+
+                    //clster 分组存一份
+                    clusterMap.put(clusterId, clusterInfo);
+                    clusterCatalogMap.computeIfAbsent(clusterId, k -> new ConcurrentHashMap<>()).put(databaseName, catalogInfo);
                 }
             }
         }
+    }
+    
+    private static ClusterInfo trans2ClusterInfo(Cluster cluster) {
+        ClusterInfo clusterInfo = new ClusterInfo();
+        BeanUtils.copyProperties(cluster, clusterInfo);
+        return clusterInfo;
     }
 
     /**
@@ -142,21 +164,45 @@ public class CatalogsManager {
         }
         return new ArrayList<>(map.keySet());
     }
+    
+    /**
+     * 根据 idc 获取该 idc 下所有 cluster 的 catalog 映射
+     * key = ClusterInfo
+     * value = Map<databaseName, CatalogInfo>
+     */
+    public static Map<ClusterInfo, Map<String, CatalogInfo>> getCataLogsGroupByCluster(String idc) {
+        if (MapUtils.isEmpty(clusterMap)) {
+            return Collections.emptyMap();
+        }
+
+        // 过滤出指定 idc 的 cluster 列表
+        List<ClusterInfo> clusters = clusterMap.values().stream()
+                .filter(cluster -> idc.equals(cluster.getIdc()))
+                .toList();
+
+        if (CollectionUtils.isEmpty(clusters)) {
+            return Collections.emptyMap();
+        }
+
+        // 从 clusterCatalogMap 中筛选出属于这些 cluster 的项
+        Map<ClusterInfo, Map<String, CatalogInfo>> result = new ConcurrentHashMap<>();
+        for (ClusterInfo cluster : clusters) {
+            Map<String, CatalogInfo> catalogs = clusterCatalogMap.get(cluster.getClusterId());
+            if (MapUtils.isNotEmpty(catalogs)) {
+                result.put(cluster, new ConcurrentHashMap<>(catalogs));
+            }
+        }
+
+        return result;
+    }
+
+
 
     /**
      * 获取指定 catalog 的详细信息
      */
     public static CatalogInfo getCatalogInfo(String catalog) {
         return catalogMap.get(catalog);
-    }
-
-    /**
-     * 获取指定 idc 下某个 catalog 的详细信息
-     */
-    public static CatalogInfo getCatalogInfo(String idc, String catalog) throws SQLFeatureNotSupportedException {
-        Map<String, CatalogInfo> map = idcCatalogMap.get(idc);
-        if (map == null) throw new SQLFeatureNotSupportedException();
-        return map.get(catalog);
     }
 
     /**
@@ -168,5 +214,9 @@ public class CatalogsManager {
             idcCatalogMap.clear();
             initialized = false;
         }
+    }
+    
+    public static ClusterInfo getClusterInfo(String clusterId) {
+        return clusterMap.get(clusterId);
     }
 }

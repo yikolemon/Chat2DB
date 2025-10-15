@@ -56,7 +56,7 @@ public class DlTemplateServiceImpl implements DlTemplateService {
     private CommandConverter commandConverter;
 
     @Override
-    public ListResult<ExecuteResult> execute(DlExecuteParam param) {
+    public ListResult<ExecuteResult> execute(DlExecuteParam param) throws SQLException {
         CommandExecutor executor = Chat2DBContext.getMetaData().getCommandExecutor();
         Command command = commandConverter.param2model(param);
         List<ExecuteResult> results = executor.execute(command);

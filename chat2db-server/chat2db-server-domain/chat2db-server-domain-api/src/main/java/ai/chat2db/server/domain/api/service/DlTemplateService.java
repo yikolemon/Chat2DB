@@ -10,6 +10,8 @@ import ai.chat2db.server.domain.api.param.GroupByParam;
 
 import ai.chat2db.server.tools.base.wrapper.result.ListResult;
 
+import java.sql.SQLException;
+
 /**
  * Data source management services
  *
@@ -25,7 +27,7 @@ public interface DlTemplateService {
      * @param param
      * @return
      */
-    ListResult<ExecuteResult> execute(DlExecuteParam param);
+    ListResult<ExecuteResult> execute(DlExecuteParam param) throws SQLException;
 
 
     /**

@@ -18,7 +18,7 @@ public interface CommandExecutor {
     /**
      * Execute command
      */
-    List<ExecuteResult> execute(Command command);
+    List<ExecuteResult> execute(Command command) throws SQLException;
 
 
     /**

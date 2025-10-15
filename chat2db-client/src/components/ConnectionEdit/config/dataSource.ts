@@ -198,7 +198,7 @@ export const dataSourceFormConfigs: IConnectionConfig[] = [
                   inputType: InputType.INPUT,
                   labelNameCN: '用户名',
                   labelNameEN: 'User',
-                  name: 'username',
+                  name: 'user',
                   required: true,
                 },
                 {

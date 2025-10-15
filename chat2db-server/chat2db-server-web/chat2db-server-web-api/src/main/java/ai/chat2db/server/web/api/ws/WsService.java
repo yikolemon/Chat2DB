@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -51,7 +52,7 @@ public class WsService {
 
     public static ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-    public ListResult<ExecuteResultVO> execute(DmlRequest request) {
+    public ListResult<ExecuteResultVO> execute(DmlRequest request) throws SQLException {
         DlExecuteParam param = rdbWebConverter.request2param(request);
         ListResult<ExecuteResult> resultDTOListResult = dlTemplateService.execute(param);
         List<ExecuteResultVO> resultVOS = rdbWebConverter.dto2vo(resultDTOListResult.getData());

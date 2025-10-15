@@ -1,6 +1,7 @@
 package ai.chat2db.server.web.api.controller.rdb;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -67,7 +68,7 @@ public class RdbDmlController {
      * @return
      */
     @RequestMapping(value = "/execute", method = {RequestMethod.POST, RequestMethod.PUT})
-    public ListResult<ExecuteResultVO> manage(@RequestBody DmlRequest request) {
+    public ListResult<ExecuteResultVO> manage(@RequestBody DmlRequest request) throws SQLException {
         DlExecuteParam param = rdbWebConverter.request2param(request);
         ListResult<ExecuteResult> resultDTOListResult = dlTemplateService.execute(param);
         List<ExecuteResultVO> resultVOS = rdbWebConverter.dto2vo(resultDTOListResult.getData());

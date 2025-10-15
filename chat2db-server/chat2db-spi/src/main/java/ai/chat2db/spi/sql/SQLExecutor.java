@@ -499,16 +499,6 @@ public class SQLExecutor implements CommandExecutor {
         }
     }
 
-    public String getDbVersion(Connection connection) {
-        try {
-            String dbVersion = connection.getMetaData().getDatabaseProductVersion();
-            return dbVersion;
-        } catch (Exception e) {
-            log.error("get db version error", e);
-        }
-        return "";
-    }
-
     @Override
     public List<ExecuteResult> execute(Command command) {
         if (StringUtils.isBlank(command.getScript())) {

@@ -8,24 +8,22 @@ import ai.chat2db.plugin.jingwei.client.resp.SqlExecuteResponse;
 import ai.chat2db.plugin.jingwei.client.resp.SqlQueryResultResponse;
 import ai.chat2db.plugin.jingwei.driver.Constants;
 import ai.chat2db.plugin.jingwei.driver.catalog.CatalogInfo;
-import ai.chat2db.plugin.jingwei.driver.catalog.CatalogsManager;
-import ai.chat2db.plugin.jingwei.driver.connection.ConnectionInfo;
 import ai.chat2db.plugin.jingwei.driver.TokenManager;
-import ai.chat2db.plugin.jingwei.driver.result.Columns;
-import ai.chat2db.plugin.jingwei.driver.result.FastjsonRow;
-import ai.chat2db.plugin.jingwei.driver.result.ResultSetImpl;
-import ai.chat2db.plugin.jingwei.driver.result.Rows;
+import ai.chat2db.spi.enums.DataTypeEnum;
+import ai.chat2db.spi.enums.SqlTypeEnum;
+import ai.chat2db.spi.model.ExecuteResult;
+import ai.chat2db.spi.model.Header;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.JSON;
 import com.dtflys.forest.Forest;
 import com.dtflys.forest.http.ForestResponse;
 import org.apache.commons.lang3.StringUtils;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * @author duanfuqiang
@@ -33,12 +31,10 @@ import java.util.Set;
  */
 public class SqlExecUtil {
 
-    public static ResultSetImpl sqlExec(ConnectionInfo conInfo, String sql) throws SQLException {
+    public static ExecuteResult sqlExec(CatalogInfo catalogInfo, String sql) throws SQLException {
         JingWeiClient client = Forest.client(JingWeiClient.class);
         String token = TokenManager.getToken();
-        String db = conInfo.getDb();
 
-        CatalogInfo catalogInfo = CatalogsManager.getCatalogInfo(db);
         SqlExecuteRequest sqlExecuteRequest = new SqlExecuteRequest();
         sqlExecuteRequest.setSql(sql);
         sqlExecuteRequest.setEnv(Integer.valueOf(Constants.JING_WEI_CATA_LOG_QUERY_ENV));
@@ -49,13 +45,13 @@ public class SqlExecUtil {
         sqlExecuteRequest.setDatabaseId(catalogInfo.getDataBaseId());
 
         // 1️⃣ 发送执行请求
-        ForestResponse<SqlExecuteResponse> sqlExecResp = client.executeSql(sqlExecuteRequest, token);
+        ForestResponse<SqlExecuteResponse> sqlExecResp = client.executeSql(catalogInfo.getDatabaseName(), sqlExecuteRequest, token);
         if (sqlExecResp == null || !sqlExecResp.isSuccess()) {
-            throw new SQLException("执行sql失败: " + sql + ", connectInfo: " + JSONUtil.toJson(conInfo));
+            throw new SQLException("执行sql失败: " + sql + ", connectInfo: " + JSON.toJSONString(catalogInfo));
         }
         SqlExecuteResponse result = sqlExecResp.getResult();
         if (result == null || result.getData() == null) {
-            throw new SQLException("执行sql失败: " + sql + ", connectInfo: " + JSONUtil.toJson(conInfo));
+            throw new SQLException("执行sql失败: " + sql + ", connectInfo: " + JSON.toJSONString(catalogInfo));
         }
         Long execId = result.getData();
 
@@ -68,12 +64,12 @@ public class SqlExecUtil {
             if (sqlQueryResult != null && sqlQueryResult.isSuccess()) {
                 queryResult = sqlQueryResult.getResult();
                 if (queryResult != null && queryResult.getData() != null) {
-                    break; // 拿到数据了，退出
+                    break;
                 }
             }
             retry++;
             try {
-                Thread.sleep(1000L); // 等 1 秒
+                Thread.sleep(1000L);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new SQLException("线程被中断，执行sql失败: " + sql, e);
@@ -81,79 +77,82 @@ public class SqlExecUtil {
         }
 
         if (queryResult == null || queryResult.getData() == null) {
-            throw new SQLException("获取sql结果超时: " + sql + ", connectInfo: " + JSONUtil.toJson(conInfo));
+            throw new SQLException("获取sql结果超时: " + sql + ", connectInfo: " + JSON.toJSONString(catalogInfo));
         }
+
         List<SqlExeRecord> sqlExeRecordList = queryResult.getData();
         if (CollectionUtil.isEmpty(sqlExeRecordList)) {
             throw new SQLException("执行sql失败，执行无返回结果");
         }
+
         SqlExeRecord sqlExeRecord = sqlExeRecordList.get(0);
         String execResult = sqlExeRecord.getResult();
         if (StringUtils.isEmpty(execResult)) {
             throw new SQLException("执行sql失败，执行返回结果为空");
         }
-        SqlExecDetailResp execDetailResp = JSONUtil.toObject(execResult, SqlExecDetailResp.class);
-        // 3️⃣ 转换成 ResultSetImpl
-        Rows rows = toRows(execDetailResp); // 你需要自己实现一个转换方法
-        return new ResultSetImpl(rows);
-    }
 
-    private static Rows toRows(SqlExecDetailResp execDetailResp) {
-        // 构建 Columns
-        Columns columns = new Columns();
-        List<String> fieldList = execDetailResp.getFields();
-        if (CollUtil.isEmpty(fieldList)) {
-            return new Rows(columns);
+        SqlExecDetailResp execDetailResp = JSON.parseObject(execResult, SqlExecDetailResp.class);
+
+        // 3️⃣ 转换成 ExecuteResult
+        ExecuteResult executeResult = new ExecuteResult();
+        executeResult.setSuccess(execDetailResp.isSuccess());
+        executeResult.setSql(execDetailResp.getSql());
+        executeResult.setOriginalSql(sql);
+        executeResult.setMessage(execDetailResp.getMessage());
+
+        if (execDetailResp.getExecutetime() != null) {
+            executeResult.setDuration(Long.valueOf(execDetailResp.getExecutetime()));
         }
-        for (int i = 0; i < fieldList.size(); i++) {
-            columns.addColumn(i + 1, fieldList.get(i));
-        }
-        Rows rows = new Rows(columns);
-        // 遍历 data 填充行
-        List<List<String>> data = execDetailResp.getData();
-        if (data != null) {
-            for (List<String> rowData : data) {
-                JSONObject rowObj = new JSONObject();
-                for (int i = 0; i < fieldList.size() && i < rowData.size(); i++) {
-                    rowObj.put(fieldList.get(i), rowData.get(i));
+
+        // ⚙️ 构造 header 列表（第一列是“行号”）
+        List<Header> headerList = new ArrayList<>();
+        Header rowNumberHeader = new Header();
+        rowNumberHeader.setName("行号");
+        rowNumberHeader.setDataType(DataTypeEnum.CHAT2DB_ROW_NUMBER.name());
+        headerList.add(rowNumberHeader);
+
+        if (CollUtil.isNotEmpty(execDetailResp.getFields())) {
+            List<String> fields = execDetailResp.getFields();
+            Map<String, String> fieldType = execDetailResp.getFieldType();
+            for (String field : fields) {
+                Header header = new Header();
+                header.setName(field);
+                header.setDataType(DataTypeEnum.STRING.name());
+                // 可以根据 fieldType 决定更精确类型
+                if (fieldType != null && fieldType.containsKey(field)) {
+                    String type = fieldType.get(field);
+                    if (type != null && type.toLowerCase().contains("int")) {
+                        header.setDataType(DataTypeEnum.NUMERIC.name());
+                    }
                 }
-                rows.addRow(new FastjsonRow(rowObj, columns));
+                headerList.add(header);
             }
         }
+        executeResult.setHeaderList(headerList);
 
-        return rows;
-    }
-
-
-    private static Rows toRows(String jsonData) {
-
-        Object parsed = JSONUtil.toJsonNode(jsonData);
-        JSONArray array;
-        if (parsed instanceof JSONArray) {
-            array = (JSONArray) parsed;
-        } else if (parsed instanceof JSONObject) {
-            array = new JSONArray();
-            array.add(parsed);
-        } else {
-            // 如果解析失败或不是对象/数组
-            array = new JSONArray();
-        }
-        Columns columns = new Columns();
-        if (!array.isEmpty()) {
-            JSONObject first = array.getJSONObject(0);
-            Set<String> keys = first.keySet();
-            int i = 1;
-            for (String key : keys) {
-                columns.addColumn(i++, key);
+        // ⚙️ 构造 dataList，每行前加行号（从 1 开始）
+        List<List<String>> rawDataList = execDetailResp.getData();
+        List<List<String>> wrappedDataList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(rawDataList)) {
+            int rowNum = 1;
+            for (List<String> row : rawDataList) {
+                List<String> newRow = new ArrayList<>();
+                newRow.add(String.valueOf(rowNum++)); // 第一列：行号
+                newRow.addAll(row); // 追加原始列
+                wrappedDataList.add(newRow);
             }
         }
+        executeResult.setDataList(wrappedDataList);
 
-        Rows rows = new Rows(columns);
-        for (int i = 0; i < array.size(); i++) {
-            JSONObject node = array.getJSONObject(i);
-            rows.addRow(new FastjsonRow(node, columns));
-        }
-        return rows;
+        // ⚙️ 其他元信息
+        executeResult.setCanEdit(false);
+        executeResult.setSqlType(SqlTypeEnum.SELECT.name());
+        executeResult.setPageSize(100);
+        executeResult.setPageNo(1);
+        executeResult.setFuzzyTotal("1");
+        executeResult.setHasNextPage(false);
+        executeResult.setDescription("执行成功");
+
+        return executeResult;
     }
-
 }

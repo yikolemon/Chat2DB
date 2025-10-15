@@ -1,6 +1,7 @@
 package ai.chat2db.plugin.jingwei.client.resp;
 
 import com.alibaba.fastjson2.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -18,24 +19,28 @@ public class SqlExecDetailResp {
      * 是否成功
      */
     @JSONField(name = "success")
+    @JsonProperty(namespace = "success")
     private boolean success;
 
     /**
      * data 字段（二维数组，每行数据对应 fields）
      */
     @JSONField(name = "data")
+    @JsonProperty("data")
     private List<List<String>> data;
 
     /**
      * 延迟
      */
     @JSONField(name = "delay")
+    @JsonProperty("delay")
     private Integer delay;
 
     /**
      * 执行耗时
      */
     @JSONField(name = "executetime")
+    @JsonProperty("executetime")
     private Integer executetime;
 
     /**
@@ -43,23 +48,27 @@ public class SqlExecDetailResp {
      * key = 字段名, value = 类型字符串
      */
     @JSONField(name = "field_type")
+    @JsonProperty("field_type")
     private Map<String, String> fieldType;
 
     /**
      * 字段列表（和 data 的每列顺序对应）
      */
     @JSONField(name = "fields")
+    @JsonProperty("fields")
     private List<String> fields;
 
     /**
      * 消息
      */
     @JSONField(name = "message")
+    @JsonProperty("message")
     private String message;
 
     /**
      * 执行的 SQL
      */
     @JSONField(name = "sql")
+    @JsonProperty("sql")
     private String sql;
 }

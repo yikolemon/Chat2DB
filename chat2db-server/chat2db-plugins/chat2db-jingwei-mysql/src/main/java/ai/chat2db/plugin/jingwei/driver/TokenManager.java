@@ -6,6 +6,8 @@ import ai.chat2db.plugin.jingwei.client.req.JingWeiTokenReq;
 import ai.chat2db.plugin.jingwei.client.resp.BaseResp;
 import ai.chat2db.plugin.jingwei.util.JSONUtil;
 import com.dtflys.forest.Forest;
+import com.dtflys.forest.http.ForestCookie;
+import com.dtflys.forest.http.ForestCookies;
 import com.dtflys.forest.http.ForestResponse;
 import com.dtflys.forest.utils.StringUtils;
 

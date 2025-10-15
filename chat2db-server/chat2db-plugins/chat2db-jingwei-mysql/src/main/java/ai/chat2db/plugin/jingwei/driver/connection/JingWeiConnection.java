@@ -1,6 +1,5 @@
 package ai.chat2db.plugin.jingwei.driver.connection;
 
-import ai.chat2db.plugin.jingwei.driver.catalog.JingWeiMetaData;
 import ai.chat2db.plugin.jingwei.driver.TokenManager;
 import ai.chat2db.plugin.jingwei.driver.statment.PreparedStatementImpl;
 import ai.chat2db.plugin.jingwei.driver.statment.StatementImpl;
@@ -96,7 +95,7 @@ public class JingWeiConnection implements Connection {
 
     @Override
     public DatabaseMetaData getMetaData() throws SQLException {
-        return new JingWeiMetaData(conInfo.getIdc());
+        throw new SQLFeatureNotSupportedException("功能未支持");
     }
     
     @Override
