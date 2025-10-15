@@ -56,8 +56,8 @@ public class JingWeiSQLExecutor implements CommandExecutor {
     }
 
     @Override
-    public List<ExecuteResult> executeSelectTable(Command command) {
-        return List.of();
+    public List<ExecuteResult> executeSelectTable(Command command) throws SQLException {
+        return execute(command);
     }
 
     @Override

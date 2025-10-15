@@ -35,7 +35,7 @@ public interface DlTemplateService {
      * @param param
      * @return
      */
-    ListResult<ExecuteResult> executeSelectTable(DlExecuteParam param);
+    ListResult<ExecuteResult> executeSelectTable(DlExecuteParam param) throws SQLException;
 
 
     /**

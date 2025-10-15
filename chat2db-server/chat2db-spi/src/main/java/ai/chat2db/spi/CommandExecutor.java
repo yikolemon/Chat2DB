@@ -30,7 +30,7 @@ public interface CommandExecutor {
     /**
      * Execute command
      */
-    List<ExecuteResult> executeSelectTable(Command command);
+    List<ExecuteResult> executeSelectTable(Command command) throws SQLException;
 
 
     /**

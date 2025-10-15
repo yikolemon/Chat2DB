@@ -97,7 +97,7 @@ public class RdbDmlController {
      * @return
      */
     @RequestMapping(value = "/execute_table", method = {RequestMethod.POST, RequestMethod.PUT})
-    public ListResult<ExecuteResultVO> executeTable(@RequestBody DmlTableRequest request) {
+    public ListResult<ExecuteResultVO> executeTable(@RequestBody DmlTableRequest request) throws SQLException {
         DlExecuteParam param = rdbWebConverter.request2param(request);
         return dlTemplateService.executeSelectTable(param)
                 .map(rdbWebConverter::dto2vo);
