@@ -84,7 +84,7 @@ public class DlTemplateServiceImpl implements DlTemplateService {
     @Override
     public ListResult<ExecuteResult> executeSelectTable(DlExecuteParam param) throws SQLException {
         Command command = commandConverter.param2model(param);
-        command.setScript("select * from " + param.getTableName());
+        command.setScript("select * from " + param.getTableName() + " limit 30;");
         List<ExecuteResult> results = Chat2DBContext.getMetaData().getCommandExecutor().executeSelectTable(command);
         return reBuildHeader(results,param.getSchemaName(),param.getDatabaseName());
     }

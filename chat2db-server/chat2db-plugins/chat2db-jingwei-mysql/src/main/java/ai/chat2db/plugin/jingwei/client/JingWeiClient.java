@@ -59,9 +59,12 @@ public interface JingWeiClient {
      * @param tokenCookie 认证Cookie
      * @return SQL执行响应
      */
-    @Post("/api/rds/rds-core-pro-user/${databaseName}/async/_exe")
+    @Post("/api/rds/${clusterId}/${databaseName}/async/_exe")
     @Redirection(value = false)
-    ForestResponse<SqlExecuteResponse> executeSql(@Var("databaseName") String databaseName, @JSONBody SqlExecuteRequest request, @Header("Cookie") String tokenCookie);
+    ForestResponse<SqlExecuteResponse> executeSql(@Var("clusterId") String clusterId,
+                                                  @Var("databaseName") String databaseName,
+                                                  @JSONBody SqlExecuteRequest request,
+                                                  @Header("Cookie") String tokenCookie);
     
     /**
      * 获取SQL查询结果

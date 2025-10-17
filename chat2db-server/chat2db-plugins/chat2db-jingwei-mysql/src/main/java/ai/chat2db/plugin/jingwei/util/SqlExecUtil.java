@@ -45,7 +45,7 @@ public class SqlExecUtil {
         sqlExecuteRequest.setDatabaseId(catalogInfo.getDataBaseId());
 
         // 1️⃣ 发送执行请求
-        ForestResponse<SqlExecuteResponse> sqlExecResp = client.executeSql(catalogInfo.getDatabaseName(), sqlExecuteRequest, token);
+        ForestResponse<SqlExecuteResponse> sqlExecResp = client.executeSql(catalogInfo.getClusterId(), catalogInfo.getDatabaseName(), sqlExecuteRequest, token);
         if (sqlExecResp == null || !sqlExecResp.isSuccess()) {
             throw new SQLException("执行sql失败: " + sql + ", connectInfo: " + JSON.toJSONString(catalogInfo));
         }
@@ -57,7 +57,7 @@ public class SqlExecUtil {
 
         // 2️⃣ 轮询查询执行结果
         SqlQueryResultResponse queryResult = null;
-        int maxRetry = 10;
+        int maxRetry = 15;
         int retry = 0;
         while (retry < maxRetry) {
             ForestResponse<SqlQueryResultResponse> sqlQueryResult = client.getSqlQueryResult(execId, token);
